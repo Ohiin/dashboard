@@ -39,6 +39,7 @@ export const WIDGET_REGISTRY: WidgetDefaultConfig[] = [
   {
   type: 'bookmark',
   label: 'Bookmarks',
+  description: 'Organize links in folders with icons',
   defaultW: 4,
   defaultH: 5,
   minW: 3,
