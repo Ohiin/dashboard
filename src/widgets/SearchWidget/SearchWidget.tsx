@@ -41,11 +41,11 @@ const SEARCH_ENGINES: SearchEngine[] = [
     placeholder: "Search GitHub...",
   },
   {
-    id: "duckduckgo",
-    name: "DuckDuckGo",
-    icon: <Search size={14} />,
-    searchUrl: (q) => `https://duckduckgo.com/?q=${encodeURIComponent(q)}`,
-    placeholder: "Search DuckDuckGo...",
+    id: "brave",
+    name: "Brave",
+    icon: <Globe size={14} />,
+    searchUrl: (q) => `https://search.brave.com/search?q=${encodeURIComponent(q)}`,
+    placeholder: "Search Brave...",
   },
   {
     id: "reddit",
@@ -63,7 +63,7 @@ function SearchWidget({ widget }: WidgetContentProps) {
   );
   const [engineId, setEngineId] = useLocalStorage<string>(
     `widget:${widget.id}:engine`,
-    "google"
+    "brave"  // <-- DEFAULT IS NOW BRAVE
   );
   const [isOpen, setIsOpen] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -108,12 +108,12 @@ function SearchWidget({ widget }: WidgetContentProps) {
   };
 
   return (
-    <div className="flex flex-col h-full justify-center gap-3">
+    <div className="flex flex-col h-full justify-center gap-3 overflow-visible">
       {/* Search Bar */}
-      <form onSubmit={handleSearch} className="relative">
+      <form onSubmit={handleSearch} className="relative overflow-visible">
         <div className="flex items-center rounded-xl bg-bg border border-border focus-within:border-cta transition-all duration-150 overflow-hidden">
           {/* Engine Selector Dropdown */}
-          <div className="relative" ref={dropdownRef}>
+          <div className="relative overflow-visible" ref={dropdownRef}>
             <button
               type="button"
               onClick={() => setIsOpen(!isOpen)}
@@ -126,7 +126,7 @@ function SearchWidget({ widget }: WidgetContentProps) {
 
             {/* Dropdown */}
             {isOpen && (
-              <div className="absolute left-0 top-full mt-1 w-40 bg-card border border-border rounded-xl shadow-soft overflow-hidden z-10">
+              <div className="absolute left-0 top-full mt-1 w-40 bg-card border border-border rounded-xl shadow-soft overflow-hidden z-50">
                 {SEARCH_ENGINES.map((engine) => (
                   <button
                     key={engine.id}
