@@ -1,5 +1,5 @@
 import { memo, useState, useEffect, useRef } from "react";
-import { Search, Globe, YouTube, Book, GitHub, ChevronDown, X } from "lucide-react";
+import { Search, Globe, Music, Book, Code2, ChevronDown, X } from "lucide-react";
 import { useLocalStorage } from "../../hooks/useLocalStorage";
 import type { WidgetContentProps } from "../WidgetRegistry";
 
@@ -22,7 +22,7 @@ const SEARCH_ENGINES: SearchEngine[] = [
   {
     id: "youtube",
     name: "YouTube",
-    icon: <YouTube size={14} />,
+    icon: <Music size={14} />,
     searchUrl: (q) => `https://www.youtube.com/results?search_query=${encodeURIComponent(q)}`,
     placeholder: "Search YouTube...",
   },
@@ -36,7 +36,7 @@ const SEARCH_ENGINES: SearchEngine[] = [
   {
     id: "github",
     name: "GitHub",
-    icon: <GitHub size={14} />,
+    icon: <Code2 size={14} />,
     searchUrl: (q) => `https://github.com/search?q=${encodeURIComponent(q)}`,
     placeholder: "Search GitHub...",
   },
