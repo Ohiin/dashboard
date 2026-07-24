@@ -20,6 +20,7 @@ export interface WidgetContentProps {
 }
 
 export const WIDGET_COMPONENTS: Record<WidgetType, ComponentType<WidgetContentProps>> = {
+  bookmark: BookmarkWidget,
   calendar: CalendarWidget,
   timer: TimerWidget,
   notepad: NotepadWidget,
@@ -35,6 +36,15 @@ export const WIDGET_COMPONENTS: Record<WidgetType, ComponentType<WidgetContentPr
 };
 
 export const WIDGET_REGISTRY: WidgetDefaultConfig[] = [
+  {
+  type: 'bookmark',
+  label: 'Bookmarks',
+  defaultW: 4,
+  defaultH: 5,
+  minW: 3,
+  minH: 4,
+  icon: '📁',
+  }
   {
     type: "calendar",
     label: "Calendar",
