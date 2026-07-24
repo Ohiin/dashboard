@@ -1,6 +1,7 @@
 import type { ComponentType } from "react";
 import type { WidgetDefaultConfig, WidgetInstance, WidgetType } from "../types";
 
+import BookmarkWidget from "./BookmarkWidget/BookmarkWidget";
 import CalendarWidget from "./CalendarWidget/CalendarWidget";
 import TimerWidget from "./TimerWidget/TimerWidget";
 import NotepadWidget from "./NotepadWidget/NotepadWidget";
@@ -19,6 +20,7 @@ export interface WidgetContentProps {
 }
 
 export const WIDGET_COMPONENTS: Record<WidgetType, ComponentType<WidgetContentProps>> = {
+  bookmark: BookmarkWidget,
   calendar: CalendarWidget,
   timer: TimerWidget,
   notepad: NotepadWidget,
@@ -34,6 +36,14 @@ export const WIDGET_COMPONENTS: Record<WidgetType, ComponentType<WidgetContentPr
 };
 
 export const WIDGET_REGISTRY: WidgetDefaultConfig[] = [
+  {
+  type: 'bookmark',
+  label: 'Bookmarks',
+  defaultW: 4,
+  defaultH: 5,
+  minW: 3,
+  minH: 4,
+  },
   {
     type: "calendar",
     label: "Calendar",
