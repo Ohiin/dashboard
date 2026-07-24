@@ -11,7 +11,8 @@ export type WidgetType =
   | "clock"
   | "timeTracker"
   | "bookmark"
-  | "custom";
+  | "custom"
+  | "search";
 
 export interface WidgetLayout {
   i: string; // widget instance id
