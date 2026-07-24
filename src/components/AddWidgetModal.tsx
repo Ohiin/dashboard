@@ -17,6 +17,7 @@ import {
   Clock,
   Hourglass,
   Code2,
+  Folder,
 } from "lucide-react";
 
 const ICONS: Record<WidgetType, React.ComponentType<{ size?: number }>> = {
@@ -32,6 +33,7 @@ const ICONS: Record<WidgetType, React.ComponentType<{ size?: number }>> = {
   clock: Clock,
   timeTracker: Hourglass,
   custom: Code2,
+  bookmark: Folder,
 };
 
 interface AddWidgetModalProps {
