@@ -1,6 +1,7 @@
 import type { ComponentType } from "react";
 import type { WidgetDefaultConfig, WidgetInstance, WidgetType } from "../types";
 
+import BookmarkWidget from "./BookmarkWidget/BookmarkWidget";
 import CalendarWidget from "./CalendarWidget/CalendarWidget";
 import TimerWidget from "./TimerWidget/TimerWidget";
 import NotepadWidget from "./NotepadWidget/NotepadWidget";
