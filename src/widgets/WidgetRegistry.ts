@@ -43,7 +43,6 @@ export const WIDGET_REGISTRY: WidgetDefaultConfig[] = [
   defaultH: 5,
   minW: 3,
   minH: 4,
-  icon: '📁',
   },
   {
     type: "calendar",
