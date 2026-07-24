@@ -18,6 +18,11 @@ function WidgetCard({ widget }: WidgetCardProps) {
   const Content = WIDGET_COMPONENTS[widget.type];
   const isLocked = widget.lock.locked && !unlockedOnce;
 
+  // Helper to stop drag events from propagating to react-grid-layout
+  const stopDrag = (e: React.MouseEvent) => {
+    e.stopPropagation();
+  };
+
   return (
     <div className="h-full w-full rounded-2xl bg-card border border-border shadow-soft flex flex-col overflow-hidden relative snap">
       <div className="widget-drag-handle flex items-center gap-2 px-3 py-2 border-b border-border cursor-move select-none">
@@ -26,7 +31,11 @@ function WidgetCard({ widget }: WidgetCardProps) {
         <div className="flex items-center gap-1 shrink-0">
           {lockIcon}
           <button
-            onClick={() => setConfirmDelete(true)}
+            onMouseDown={stopDrag}  // 👈 STOPS THE DRAG
+            onClick={(e) => {
+              e.stopPropagation();
+              setConfirmDelete(true);
+            }}
             className="text-accent hover:text-red-400 transition-colors duration-150 rounded-full p-1 hover:bg-white/10"
             title="Delete widget"
           >
@@ -55,13 +64,21 @@ function WidgetCard({ widget }: WidgetCardProps) {
           <p className="text-white text-sm text-center">Delete this widget and its data?</p>
           <div className="flex gap-2">
             <button
-              onClick={() => setConfirmDelete(false)}
+              onMouseDown={stopDrag}  // 👈 STOPS THE DRAG
+              onClick={(e) => {
+                e.stopPropagation();
+                setConfirmDelete(false);
+              }}
               className="px-3 py-1.5 text-sm rounded-full border border-border text-accent hover:bg-white/5 transition-all duration-150"
             >
               Cancel
             </button>
             <button
-              onClick={() => removeWidget(widget.id)}
+              onMouseDown={stopDrag}  // 👈 STOPS THE DRAG
+              onClick={(e) => {
+                e.stopPropagation();
+                removeWidget(widget.id);
+              }}
               className="px-3 py-1.5 text-sm rounded-full bg-cta hover:bg-cta-hover text-white transition-all duration-150"
             >
               Delete
