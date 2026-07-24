@@ -26,7 +26,10 @@ function WidgetCard({ widget }: WidgetCardProps) {
         <div className="flex items-center gap-1 shrink-0">
           {lockIcon}
           <button
-            onClick={() => setConfirmDelete(true)}
+            onClick={(e) => {
+              e.stopPropagation();
+              setConfirmDelete(true);
+            }}
             className="text-accent hover:text-red-400 transition-colors duration-150 rounded-full p-1 hover:bg-white/10"
             title="Delete widget"
           >
@@ -61,7 +64,10 @@ function WidgetCard({ widget }: WidgetCardProps) {
               Cancel
             </button>
             <button
-              onClick={() => removeWidget(widget.id)}
+              onClick={(e) => {
+                e.stopPropagation();
+                removeWidget(widget.id);
+              }}
               className="px-3 py-1.5 text-sm rounded-full bg-cta hover:bg-cta-hover text-white transition-all duration-150"
             >
               Delete
