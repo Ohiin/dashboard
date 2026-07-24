@@ -10,6 +10,7 @@ export type WidgetType =
   | "expenseCalculator"
   | "clock"
   | "timeTracker"
+  | "bookmark"
   | "custom";
 
 export interface WidgetLayout {
