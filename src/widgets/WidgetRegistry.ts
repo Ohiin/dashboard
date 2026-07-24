@@ -13,7 +13,8 @@ import HabitTrackerWidget from "./HabitTrackerWidget/HabitTrackerWidget";
 import ExpenseCalculatorWidget from "./ExpenseCalculatorWidget/ExpenseCalculatorWidget";
 import ClockWidget from "./ClockWidget/ClockWidget";
 import TimeTrackerWidget from "./TimeTrackerWidget/TimeTrackerWidget";
-import CustomWidget from "./CustomWidget/CustomWidget";
+import CustomWidget from "./CustomWidget/CustomWidget"
+import SearchWidget from './SearchWidget/SearchWidget';
 
 export interface WidgetContentProps {
   widget: WidgetInstance;
@@ -33,6 +34,7 @@ export const WIDGET_COMPONENTS: Record<WidgetType, ComponentType<WidgetContentPr
   clock: ClockWidget,
   timeTracker: TimeTrackerWidget,
   custom: CustomWidget,
+  search: SearchWidget,
 };
 
 export const WIDGET_REGISTRY: WidgetDefaultConfig[] = [
@@ -152,6 +154,15 @@ export const WIDGET_REGISTRY: WidgetDefaultConfig[] = [
     defaultH: 5,
     minW: 2,
     minH: 3,
+  },
+  {
+  type: 'search',
+  label: 'Search Bar',
+  description: 'Search Google, YouTube, GitHub & more',
+  defaultW: 4,
+  defaultH: 2,
+  minW: 2,
+  minH: 2,
   },
 ];
 
