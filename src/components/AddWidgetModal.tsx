@@ -35,7 +35,7 @@ const ICONS: Record<WidgetType, React.ComponentType<{ size?: number }>> = {
   timeTracker: Hourglass,
   custom: Code2,
   bookmark: Folder,
-  search: SearchIcon,
+  search: Search,
 };
 
 interface AddWidgetModalProps {
