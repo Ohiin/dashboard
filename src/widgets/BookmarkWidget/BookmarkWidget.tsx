@@ -69,12 +69,6 @@ function BookmarkWidget({ widget }: WidgetContentProps) {
       folders: [...prev.folders, { id: genId(), name, links: [] }],
     }));
     setNewFolderName("");
-    // Auto-expand new folder
-    setExpandedFolders((prev) => {
-      const newSet = new Set(prev);
-      // We'll expand it after creation - need the ID
-      return newSet;
-    });
   };
 
   const deleteFolder = (id: string) => {
@@ -165,7 +159,7 @@ function BookmarkWidget({ widget }: WidgetContentProps) {
     }));
   };
 
-  // --- Render Link Card (used for both grid and list) ---
+  // --- Render Link Card ---
   const LinkCard = ({ link, onDelete }: { link: BookmarkLink; onDelete: () => void }) => {
     const favicon = getFaviconUrl(link.url);
     const [imgError, setImgError] = useState(false);
@@ -206,7 +200,7 @@ function BookmarkWidget({ widget }: WidgetContentProps) {
       );
     }
 
-    // Grid view - icon tiles
+    // Grid view
     return (
       <div className="group relative">
         <a
@@ -310,7 +304,7 @@ function BookmarkWidget({ widget }: WidgetContentProps) {
         </button>
       )}
 
-      {/* Standalone Links Grid */}
+      {/* Standalone Links */}
       {data.standaloneLinks.length > 0 && (
         <div className="mt-1">
           <div className="text-xs text-accent/60 mb-1.5 font-medium">Quick Links</div>
@@ -329,7 +323,7 @@ function BookmarkWidget({ widget }: WidgetContentProps) {
         </div>
       )}
 
-      {/* Add Folder Input */}
+      {/* Add Folder */}
       <div className="flex gap-1.5 mt-2">
         <input
           type="text"
@@ -347,13 +341,14 @@ function BookmarkWidget({ widget }: WidgetContentProps) {
         </button>
       </div>
 
-      {/* Folders */}
+      {/* Empty State */}
       {data.folders.length === 0 && data.standaloneLinks.length === 0 && (
         <div className="text-center text-accent/60 text-xs py-6">
           Add standalone links or create folders to organize them!
         </div>
       )}
 
+      {/* Folders */}
       {data.folders.map((folder) => {
         const isExpanded = expandedFolders.has(folder.id);
         const isAddingLink = activeFolderId === folder.id;
@@ -453,7 +448,7 @@ function BookmarkWidget({ widget }: WidgetContentProps) {
                   </button>
                 )}
 
-                {/* Folder Links Grid */}
+                {/* Folder Links */}
                 {folder.links.length > 0 && (
                   <div className={viewMode === "grid" 
                     ? "grid grid-cols-4 sm:grid-cols-5 gap-2 mt-2" 
