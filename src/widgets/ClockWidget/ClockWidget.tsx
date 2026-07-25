@@ -1,4 +1,5 @@
 import { memo, useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { Maximize2, Minimize2 } from "lucide-react";
 import { useLocalStorage } from "../../hooks/useLocalStorage";
 import type { WidgetContentProps } from "../WidgetRegistry";
@@ -28,18 +29,15 @@ function ClockWidget({ widget }: WidgetContentProps) {
     return () => clearInterval(timer);
   }, []);
 
-  // Fullscreen - lock body scroll and handle escape key
+  // Handle body scroll and escape key for fullscreen
   useEffect(() => {
     if (isFullscreen) {
       document.body.style.overflow = "hidden";
       document.body.style.position = "fixed";
       document.body.style.width = "100%";
       document.body.style.height = "100%";
-      
       const handleEscape = (e: KeyboardEvent) => {
-        if (e.key === "Escape") {
-          setIsFullscreen(false);
-        }
+        if (e.key === "Escape") setIsFullscreen(false);
       };
       document.addEventListener("keydown", handleEscape);
       return () => {
@@ -55,12 +53,6 @@ function ClockWidget({ widget }: WidgetContentProps) {
       document.body.style.width = "";
       document.body.style.height = "";
     }
-    return () => {
-      document.body.style.overflow = "";
-      document.body.style.position = "";
-      document.body.style.width = "";
-      document.body.style.height = "";
-    };
   }, [isFullscreen]);
 
   const toggleFullscreen = () => setIsFullscreen(!isFullscreen);
@@ -196,50 +188,55 @@ function ClockWidget({ widget }: WidgetContentProps) {
     }
   };
 
+  const clockContent = (
+    <div className="flex flex-col h-full">
+      <div className="flex-1 flex items-center justify-center p-4">
+        {renderClock()}
+      </div>
+      <div className="text-center pb-2 flex items-center justify-center gap-3">
+        <span className="text-xs text-accent/60">
+          {time.toLocaleDateString("en-US", {
+            weekday: "long",
+            year: "numeric",
+            month: "long",
+            day: "numeric",
+          })}
+        </span>
+        <button
+          onClick={toggleFullscreen}
+          className="text-accent/40 hover:text-white transition-colors duration-150 p-1 rounded hover:bg-white/5"
+          title="Fullscreen"
+        >
+          <Maximize2 size={14} />
+        </button>
+      </div>
+    </div>
+  );
+
   return (
     <>
-      {isFullscreen && (
-        <div
-          className="fixed inset-0 z-[100] bg-[#1a1a1a] flex flex-col items-center justify-center p-8"
-          onDoubleClick={toggleFullscreen}
-        >
-          <div className="w-full max-w-2xl">
-            {renderClock()}
-          </div>
-          <button
-            onClick={toggleFullscreen}
-            className="fixed top-6 right-6 text-accent/60 hover:text-white transition-colors duration-150 p-2 rounded-lg hover:bg-white/5 z-[101]"
+      {clockContent}
+      {isFullscreen &&
+        createPortal(
+          <div
+            className="fixed inset-0 z-[200] bg-[#1a1a1a] flex flex-col items-center justify-center p-8"
+            onDoubleClick={toggleFullscreen}
           >
-            <Minimize2 size={24} />
-          </button>
-          <div className="fixed bottom-6 left-1/2 -translate-x-1/2 text-xs text-accent/40 z-[101]">
-            Double-click or press ESC to exit fullscreen
-          </div>
-        </div>
-      )}
-
-      <div className="flex flex-col h-full">
-        <div className="flex-1 flex items-center justify-center p-4">
-          {renderClock()}
-        </div>
-        <div className="text-center pb-2 flex items-center justify-center gap-3">
-          <span className="text-xs text-accent/60">
-            {time.toLocaleDateString("en-US", {
-              weekday: "long",
-              year: "numeric",
-              month: "long",
-              day: "numeric",
-            })}
-          </span>
-          <button
-            onClick={toggleFullscreen}
-            className="text-accent/40 hover:text-white transition-colors duration-150 p-1 rounded hover:bg-white/5"
-            title="Fullscreen"
-          >
-            <Maximize2 size={14} />
-          </button>
-        </div>
-      </div>
+            <div className="w-full max-w-2xl">
+              {renderClock()}
+            </div>
+            <button
+              onClick={toggleFullscreen}
+              className="absolute top-6 right-6 text-accent/60 hover:text-white transition-colors duration-150 p-2 rounded-lg hover:bg-white/5 z-[201]"
+            >
+              <Minimize2 size={24} />
+            </button>
+            <div className="absolute bottom-6 left-1/2 -translate-x-1/2 text-xs text-accent/40 z-[201]">
+              Double-click or press ESC to exit
+            </div>
+          </div>,
+          document.body
+        )}
     </>
   );
 }
