@@ -28,14 +28,38 @@ function ClockWidget({ widget }: WidgetContentProps) {
     return () => clearInterval(timer);
   }, []);
 
+  // Fullscreen - lock body scroll and handle escape key
   useEffect(() => {
     if (isFullscreen) {
       document.body.style.overflow = "hidden";
+      document.body.style.position = "fixed";
+      document.body.style.width = "100%";
+      document.body.style.height = "100%";
+      
+      const handleEscape = (e: KeyboardEvent) => {
+        if (e.key === "Escape") {
+          setIsFullscreen(false);
+        }
+      };
+      document.addEventListener("keydown", handleEscape);
+      return () => {
+        document.removeEventListener("keydown", handleEscape);
+        document.body.style.overflow = "";
+        document.body.style.position = "";
+        document.body.style.width = "";
+        document.body.style.height = "";
+      };
     } else {
       document.body.style.overflow = "";
+      document.body.style.position = "";
+      document.body.style.width = "";
+      document.body.style.height = "";
     }
     return () => {
       document.body.style.overflow = "";
+      document.body.style.position = "";
+      document.body.style.width = "";
+      document.body.style.height = "";
     };
   }, [isFullscreen]);
 
@@ -176,7 +200,7 @@ function ClockWidget({ widget }: WidgetContentProps) {
     <>
       {isFullscreen && (
         <div
-          className="fixed inset-0 z-[100] bg-bg flex items-center justify-center p-8"
+          className="fixed inset-0 z-[100] bg-[#1a1a1a] flex flex-col items-center justify-center p-8"
           onDoubleClick={toggleFullscreen}
         >
           <div className="w-full max-w-2xl">
@@ -184,12 +208,12 @@ function ClockWidget({ widget }: WidgetContentProps) {
           </div>
           <button
             onClick={toggleFullscreen}
-            className="fixed top-6 right-6 text-accent/60 hover:text-white transition-colors duration-150 p-2 rounded-lg hover:bg-white/5"
+            className="fixed top-6 right-6 text-accent/60 hover:text-white transition-colors duration-150 p-2 rounded-lg hover:bg-white/5 z-[101]"
           >
             <Minimize2 size={24} />
           </button>
-          <div className="fixed bottom-6 left-1/2 -translate-x-1/2 text-xs text-accent/40">
-            Double-click or press ESC to exit
+          <div className="fixed bottom-6 left-1/2 -translate-x-1/2 text-xs text-accent/40 z-[101]">
+            Double-click or press ESC to exit fullscreen
           </div>
         </div>
       )}
