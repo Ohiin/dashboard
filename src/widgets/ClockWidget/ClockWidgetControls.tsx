@@ -35,15 +35,16 @@ function ClockWidgetControls({ widget }: ClockWidgetControlsProps) {
   const [dropdownPosition, setDropdownPosition] = useState({ top: 0, right: 0 });
 
   const updateSetting = <K extends keyof ClockState>(key: K, value: ClockState[K]) => {
-    setSettings({ ...settings, [key]: value });
+    const newSettings = { ...settings, [key]: value };
+    setSettings(newSettings);
+    // Dispatch custom event to notify ClockWidget
+    window.dispatchEvent(new CustomEvent(`settings-update-${widget.id}`));
   };
 
-  // Stop drag events
   const stopDrag = (e: React.MouseEvent) => {
     e.stopPropagation();
   };
 
-  // Toggle dropdown and calculate position
   const toggleDropdown = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (!isOpen && buttonRef.current) {
@@ -56,7 +57,6 @@ function ClockWidgetControls({ widget }: ClockWidgetControlsProps) {
     setIsOpen(!isOpen);
   };
 
-  // Close on escape
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
       if (e.key === "Escape") setIsOpen(false);
@@ -79,10 +79,8 @@ function ClockWidgetControls({ widget }: ClockWidgetControlsProps) {
     );
   }
 
-  // Portal the dropdown to the body
   return createPortal(
     <>
-      {/* Backdrop */}
       <div
         className="fixed inset-0 z-40"
         onMouseDown={(e) => {
@@ -90,8 +88,6 @@ function ClockWidgetControls({ widget }: ClockWidgetControlsProps) {
           setIsOpen(false);
         }}
       />
-      
-      {/* Dropdown */}
       <div
         className="fixed z-50 w-56 bg-card border border-border rounded-xl shadow-soft p-3"
         style={{
@@ -115,7 +111,6 @@ function ClockWidgetControls({ widget }: ClockWidgetControlsProps) {
           </button>
         </div>
 
-        {/* Clock Face */}
         <div className="mb-2">
           <label className="text-[10px] text-accent/60 block mb-1">Face</label>
           <div className="grid grid-cols-2 gap-1">
@@ -139,7 +134,6 @@ function ClockWidgetControls({ widget }: ClockWidgetControlsProps) {
           </div>
         </div>
 
-        {/* Toggles */}
         <div className="flex flex-col gap-1">
           <label className="flex items-center justify-between cursor-pointer">
             <span className="text-[10px] text-accent">24hr Format</span>
