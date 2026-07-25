@@ -25,7 +25,7 @@ function ClockWidget({ widget }: WidgetContentProps) {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [, forceUpdate] = useState(0);
 
-  // Force re-render when localStorage changes (for settings sync)
+  // Force re-render when localStorage changes
   useEffect(() => {
     const handleStorageChange = (e: StorageEvent) => {
       if (e.key === `widget:${widget.id}:settings`) {
@@ -36,7 +36,7 @@ function ClockWidget({ widget }: WidgetContentProps) {
     return () => window.removeEventListener("storage", handleStorageChange);
   }, [widget.id]);
 
-  // Also listen for custom event from the controls
+  // Custom event listener
   useEffect(() => {
     const handleSettingsUpdate = () => {
       forceUpdate((prev) => prev + 1);
@@ -83,13 +83,15 @@ function ClockWidget({ widget }: WidgetContentProps) {
   const minutes = String(time.getMinutes()).padStart(2, "0");
   const seconds = String(time.getSeconds()).padStart(2, "0");
 
-  const renderAnalog = () => {
+  const renderAnalog = (large: boolean = false) => {
     const angleHours = (hours % 12) * 30 + time.getMinutes() * 0.5;
     const angleMinutes = time.getMinutes() * 6 + time.getSeconds() * 0.1;
     const angleSeconds = time.getSeconds() * 6;
 
+    const sizeClass = large ? "max-w-[400px]" : "max-w-[200px]";
+
     return (
-      <div className="relative w-full max-w-[200px] aspect-square mx-auto">
+      <div className={`relative w-full ${sizeClass} aspect-square mx-auto`}>
         <svg viewBox="0 0 100 100" className="w-full h-full">
           <circle cx="50" cy="50" r="45" className="fill-bg stroke-border" strokeWidth="2" />
           {[0, 30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330].map((deg, i) => {
@@ -140,53 +142,58 @@ function ClockWidget({ widget }: WidgetContentProps) {
     );
   };
 
-  const renderDigital = (showSecs: boolean) => {
+  const renderDigital = (showSecs: boolean, large: boolean = false) => {
     const timeStr = settings.format24
       ? `${String(hours).padStart(2, "0")}:${minutes}${showSecs ? `:${seconds}` : ""}`
       : `${hours}:${minutes}${showSecs ? `:${seconds}` : ""} ${hours >= 12 ? "PM" : "AM"}`;
+
+    const sizeClass = large ? "text-8xl" : "text-5xl";
     
     return (
       <div className="flex items-center justify-center h-full">
-        <div className="font-mono font-bold text-white text-center text-5xl">
+        <div className={`font-['Inter'] font-light tracking-wider text-white text-center ${sizeClass}`}>
           {timeStr}
         </div>
       </div>
     );
   };
 
-  const renderFlip = () => {
+  const renderFlip = (large: boolean = false) => {
     const h = String(hours).padStart(2, "0");
     const m = String(time.getMinutes()).padStart(2, "0");
     const s = String(time.getSeconds()).padStart(2, "0");
 
+    const sizeClass = large ? "text-6xl" : "text-3xl";
+    const boxSize = large ? "min-w-[60px] px-4 py-3" : "min-w-[30px] px-2 py-1";
+
     return (
-      <div className="flex items-center justify-center h-full gap-1">
-        <div className="flex gap-0.5">
-          <div className="bg-bg border border-border rounded-lg px-2 py-1 min-w-[30px] text-center">
-            <span className="text-3xl font-mono font-bold text-white">{h[0]}</span>
+      <div className="flex items-center justify-center h-full gap-2">
+        <div className="flex gap-1">
+          <div className={`bg-bg border border-border rounded-lg ${boxSize} text-center`}>
+            <span className={`font-mono font-bold text-white ${sizeClass}`}>{h[0]}</span>
           </div>
-          <div className="bg-bg border border-border rounded-lg px-2 py-1 min-w-[30px] text-center">
-            <span className="text-3xl font-mono font-bold text-white">{h[1]}</span>
+          <div className={`bg-bg border border-border rounded-lg ${boxSize} text-center`}>
+            <span className={`font-mono font-bold text-white ${sizeClass}`}>{h[1]}</span>
           </div>
         </div>
-        <span className="text-2xl font-bold text-accent/60">:</span>
-        <div className="flex gap-0.5">
-          <div className="bg-bg border border-border rounded-lg px-2 py-1 min-w-[30px] text-center">
-            <span className="text-3xl font-mono font-bold text-white">{m[0]}</span>
+        <span className={`font-bold text-accent/60 ${sizeClass}`}>:</span>
+        <div className="flex gap-1">
+          <div className={`bg-bg border border-border rounded-lg ${boxSize} text-center`}>
+            <span className={`font-mono font-bold text-white ${sizeClass}`}>{m[0]}</span>
           </div>
-          <div className="bg-bg border border-border rounded-lg px-2 py-1 min-w-[30px] text-center">
-            <span className="text-3xl font-mono font-bold text-white">{m[1]}</span>
+          <div className={`bg-bg border border-border rounded-lg ${boxSize} text-center`}>
+            <span className={`font-mono font-bold text-white ${sizeClass}`}>{m[1]}</span>
           </div>
         </div>
         {settings.showSeconds && (
           <>
-            <span className="text-2xl font-bold text-accent/60">:</span>
-            <div className="flex gap-0.5">
-              <div className="bg-bg border border-border rounded-lg px-2 py-1 min-w-[30px] text-center">
-                <span className="text-3xl font-mono font-bold text-white">{s[0]}</span>
+            <span className={`font-bold text-accent/60 ${sizeClass}`}>:</span>
+            <div className="flex gap-1">
+              <div className={`bg-bg border border-border rounded-lg ${boxSize} text-center`}>
+                <span className={`font-mono font-bold text-white ${sizeClass}`}>{s[0]}</span>
               </div>
-              <div className="bg-bg border border-border rounded-lg px-2 py-1 min-w-[30px] text-center">
-                <span className="text-3xl font-mono font-bold text-white">{s[1]}</span>
+              <div className={`bg-bg border border-border rounded-lg ${boxSize} text-center`}>
+                <span className={`font-mono font-bold text-white ${sizeClass}`}>{s[1]}</span>
               </div>
             </div>
           </>
@@ -195,25 +202,25 @@ function ClockWidget({ widget }: WidgetContentProps) {
     );
   };
 
-  const renderClock = () => {
+  const renderClock = (large: boolean = false) => {
     switch (settings.face) {
       case "analog":
-        return renderAnalog();
+        return renderAnalog(large);
       case "digital":
-        return renderDigital(false);
+        return renderDigital(false, large);
       case "digital-seconds":
-        return renderDigital(true);
+        return renderDigital(true, large);
       case "flip":
-        return renderFlip();
+        return renderFlip(large);
       default:
-        return renderAnalog();
+        return renderAnalog(large);
     }
   };
 
   const clockContent = (
     <div className="flex flex-col h-full">
       <div className="flex-1 flex items-center justify-center p-4">
-        {renderClock()}
+        {renderClock(false)}
       </div>
       <div className="text-center pb-2 flex items-center justify-center gap-3">
         <span className="text-xs text-accent/60">
@@ -244,8 +251,18 @@ function ClockWidget({ widget }: WidgetContentProps) {
             className="fixed inset-0 z-[200] bg-[#1a1a1a] flex flex-col items-center justify-center p-8"
             onDoubleClick={toggleFullscreen}
           >
-            <div className="w-full max-w-2xl">
-              {renderClock()}
+            <div className="w-full max-w-4xl">
+              {renderClock(true)}
+            </div>
+            <div className="mt-6 text-center">
+              <span className="text-sm text-accent/60">
+                {time.toLocaleDateString("en-US", {
+                  weekday: "long",
+                  year: "numeric",
+                  month: "long",
+                  day: "numeric",
+                })}
+              </span>
             </div>
             <button
               onClick={toggleFullscreen}
