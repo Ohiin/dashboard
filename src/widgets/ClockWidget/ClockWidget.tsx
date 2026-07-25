@@ -88,7 +88,8 @@ function ClockWidget({ widget }: WidgetContentProps) {
     const angleMinutes = time.getMinutes() * 6 + time.getSeconds() * 0.1;
     const angleSeconds = time.getSeconds() * 6;
 
-    const sizeClass = large ? "max-w-[400px]" : "max-w-[200px]";
+    // Normal: 200px, Fullscreen: 600px (3x bigger)
+    const sizeClass = large ? "max-w-[600px]" : "max-w-[200px]";
 
     return (
       <div className={`relative w-full ${sizeClass} aspect-square mx-auto`}>
@@ -147,7 +148,8 @@ function ClockWidget({ widget }: WidgetContentProps) {
       ? `${String(hours).padStart(2, "0")}:${minutes}${showSecs ? `:${seconds}` : ""}`
       : `${hours}:${minutes}${showSecs ? `:${seconds}` : ""} ${hours >= 12 ? "PM" : "AM"}`;
 
-    const sizeClass = large ? "text-8xl" : "text-5xl";
+    // Normal: text-5xl, Fullscreen: text-[8rem] (massive)
+    const sizeClass = large ? "text-[8rem] leading-none" : "text-5xl";
     
     return (
       <div className="flex items-center justify-center h-full">
@@ -163,36 +165,39 @@ function ClockWidget({ widget }: WidgetContentProps) {
     const m = String(time.getMinutes()).padStart(2, "0");
     const s = String(time.getSeconds()).padStart(2, "0");
 
-    const sizeClass = large ? "text-6xl" : "text-3xl";
-    const boxSize = large ? "min-w-[60px] px-4 py-3" : "min-w-[30px] px-2 py-1";
+    // Normal: text-3xl, Fullscreen: text-7xl
+    const sizeClass = large ? "text-7xl" : "text-3xl";
+    const boxSize = large 
+      ? "min-w-[80px] px-6 py-4 rounded-2xl" 
+      : "min-w-[30px] px-2 py-1 rounded-lg";
 
     return (
-      <div className="flex items-center justify-center h-full gap-2">
-        <div className="flex gap-1">
-          <div className={`bg-bg border border-border rounded-lg ${boxSize} text-center`}>
+      <div className="flex items-center justify-center h-full gap-3">
+        <div className="flex gap-1.5">
+          <div className={`bg-bg border border-border ${boxSize} text-center`}>
             <span className={`font-mono font-bold text-white ${sizeClass}`}>{h[0]}</span>
           </div>
-          <div className={`bg-bg border border-border rounded-lg ${boxSize} text-center`}>
+          <div className={`bg-bg border border-border ${boxSize} text-center`}>
             <span className={`font-mono font-bold text-white ${sizeClass}`}>{h[1]}</span>
           </div>
         </div>
         <span className={`font-bold text-accent/60 ${sizeClass}`}>:</span>
-        <div className="flex gap-1">
-          <div className={`bg-bg border border-border rounded-lg ${boxSize} text-center`}>
+        <div className="flex gap-1.5">
+          <div className={`bg-bg border border-border ${boxSize} text-center`}>
             <span className={`font-mono font-bold text-white ${sizeClass}`}>{m[0]}</span>
           </div>
-          <div className={`bg-bg border border-border rounded-lg ${boxSize} text-center`}>
+          <div className={`bg-bg border border-border ${boxSize} text-center`}>
             <span className={`font-mono font-bold text-white ${sizeClass}`}>{m[1]}</span>
           </div>
         </div>
         {settings.showSeconds && (
           <>
             <span className={`font-bold text-accent/60 ${sizeClass}`}>:</span>
-            <div className="flex gap-1">
-              <div className={`bg-bg border border-border rounded-lg ${boxSize} text-center`}>
+            <div className="flex gap-1.5">
+              <div className={`bg-bg border border-border ${boxSize} text-center`}>
                 <span className={`font-mono font-bold text-white ${sizeClass}`}>{s[0]}</span>
               </div>
-              <div className={`bg-bg border border-border rounded-lg ${boxSize} text-center`}>
+              <div className={`bg-bg border border-border ${boxSize} text-center`}>
                 <span className={`font-mono font-bold text-white ${sizeClass}`}>{s[1]}</span>
               </div>
             </div>
@@ -217,19 +222,23 @@ function ClockWidget({ widget }: WidgetContentProps) {
     }
   };
 
+  const formatDate = (date: Date) => {
+    return date.toLocaleDateString("en-US", {
+      weekday: "long",
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
+  };
+
   const clockContent = (
     <div className="flex flex-col h-full">
       <div className="flex-1 flex items-center justify-center p-4">
         {renderClock(false)}
       </div>
       <div className="text-center pb-2 flex items-center justify-center gap-3">
-        <span className="text-xs text-accent/60">
-          {time.toLocaleDateString("en-US", {
-            weekday: "long",
-            year: "numeric",
-            month: "long",
-            day: "numeric",
-          })}
+        <span className="text-sm text-white">
+          {formatDate(time)}
         </span>
         <button
           onClick={toggleFullscreen}
@@ -251,17 +260,12 @@ function ClockWidget({ widget }: WidgetContentProps) {
             className="fixed inset-0 z-[200] bg-[#1a1a1a] flex flex-col items-center justify-center p-8"
             onDoubleClick={toggleFullscreen}
           >
-            <div className="w-full max-w-4xl">
+            <div className="w-full max-w-6xl">
               {renderClock(true)}
             </div>
-            <div className="mt-6 text-center">
-              <span className="text-sm text-accent/60">
-                {time.toLocaleDateString("en-US", {
-                  weekday: "long",
-                  year: "numeric",
-                  month: "long",
-                  day: "numeric",
-                })}
+            <div className="mt-8 text-center">
+              <span className="text-2xl text-white font-light tracking-wide">
+                {formatDate(time)}
               </span>
             </div>
             <button
