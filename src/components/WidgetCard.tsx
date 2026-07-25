@@ -4,6 +4,7 @@ import type { WidgetInstance } from "../types";
 import { WIDGET_COMPONENTS } from "../widgets/WidgetRegistry";
 import { useWidgetStore } from "../store/widgetStore";
 import { useLockIcon, LockedOverlay } from "./PasswordLock";
+import ClockWidgetControls from "../widgets/ClockWidget/ClockWidgetControls";
 
 interface WidgetCardProps {
   widget: WidgetInstance;
@@ -23,15 +24,24 @@ function WidgetCard({ widget }: WidgetCardProps) {
     e.stopPropagation();
   };
 
+  // Custom header controls for specific widget types
+  const renderHeaderControls = () => {
+    if (widget.type === "clock") {
+      return <ClockWidgetControls widget={widget} />;
+    }
+    return null;
+  };
+
   return (
     <div className="h-full w-full rounded-2xl bg-card border border-border shadow-soft flex flex-col overflow-hidden relative snap">
       <div className="widget-drag-handle flex items-center gap-2 px-3 py-2 border-b border-border cursor-move select-none">
         <GripVertical size={14} className="text-accent shrink-0" />
         <span className="text-sm font-semibold text-white truncate flex-1">{widget.title}</span>
         <div className="flex items-center gap-1 shrink-0">
+          {renderHeaderControls()}  {/* 👈 NEW: Custom controls for specific widgets */}
           {lockIcon}
           <button
-            onMouseDown={stopDrag}  // 👈 STOPS THE DRAG
+            onMouseDown={stopDrag}
             onClick={(e) => {
               e.stopPropagation();
               setConfirmDelete(true);
@@ -64,7 +74,7 @@ function WidgetCard({ widget }: WidgetCardProps) {
           <p className="text-white text-sm text-center">Delete this widget and its data?</p>
           <div className="flex gap-2">
             <button
-              onMouseDown={stopDrag}  // 👈 STOPS THE DRAG
+              onMouseDown={stopDrag}
               onClick={(e) => {
                 e.stopPropagation();
                 setConfirmDelete(false);
@@ -74,7 +84,7 @@ function WidgetCard({ widget }: WidgetCardProps) {
               Cancel
             </button>
             <button
-              onMouseDown={stopDrag}  // 👈 STOPS THE DRAG
+              onMouseDown={stopDrag}
               onClick={(e) => {
                 e.stopPropagation();
                 removeWidget(widget.id);
