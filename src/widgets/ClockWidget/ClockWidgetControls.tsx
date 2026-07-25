@@ -1,4 +1,5 @@
-import { memo, useState } from "react";
+import { memo, useState, useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
 import { Settings, X } from "lucide-react";
 import type { WidgetInstance } from "../../types";
 import { useLocalStorage } from "../../hooks/useLocalStorage";
@@ -30,24 +31,46 @@ function ClockWidgetControls({ widget }: ClockWidgetControlsProps) {
     }
   );
   const [isOpen, setIsOpen] = useState(false);
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  const [dropdownPosition, setDropdownPosition] = useState({ top: 0, right: 0 });
 
   const updateSetting = <K extends keyof ClockState>(key: K, value: ClockState[K]) => {
     setSettings({ ...settings, [key]: value });
   };
 
-  // Stop drag events from propagating
+  // Stop drag events
   const stopDrag = (e: React.MouseEvent) => {
     e.stopPropagation();
   };
 
+  // Toggle dropdown and calculate position
+  const toggleDropdown = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!isOpen && buttonRef.current) {
+      const rect = buttonRef.current.getBoundingClientRect();
+      setDropdownPosition({
+        top: rect.bottom + 8,
+        right: window.innerWidth - rect.right,
+      });
+    }
+    setIsOpen(!isOpen);
+  };
+
+  // Close on escape
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setIsOpen(false);
+    };
+    if (isOpen) document.addEventListener("keydown", handleEscape);
+    return () => document.removeEventListener("keydown", handleEscape);
+  }, [isOpen]);
+
   if (!isOpen) {
     return (
       <button
+        ref={buttonRef}
         onMouseDown={stopDrag}
-        onClick={(e) => {
-          e.stopPropagation();
-          setIsOpen(true);
-        }}
+        onClick={toggleDropdown}
         className="text-accent/60 hover:text-white transition-colors duration-150 rounded-full p-1 hover:bg-white/10"
         title="Clock settings"
       >
@@ -56,9 +79,10 @@ function ClockWidgetControls({ widget }: ClockWidgetControlsProps) {
     );
   }
 
-  return (
+  // Portal the dropdown to the body
+  return createPortal(
     <>
-      {/* Backdrop - fixed to cover the whole screen */}
+      {/* Backdrop */}
       <div
         className="fixed inset-0 z-40"
         onMouseDown={(e) => {
@@ -69,7 +93,11 @@ function ClockWidgetControls({ widget }: ClockWidgetControlsProps) {
       
       {/* Dropdown */}
       <div
-        className="absolute right-0 top-full mt-2 w-56 bg-card border border-border rounded-xl shadow-soft p-3 z-50"
+        className="fixed z-50 w-56 bg-card border border-border rounded-xl shadow-soft p-3"
+        style={{
+          top: dropdownPosition.top,
+          right: dropdownPosition.right,
+        }}
         onMouseDown={stopDrag}
         onClick={(e) => e.stopPropagation()}
       >
@@ -156,7 +184,8 @@ function ClockWidgetControls({ widget }: ClockWidgetControlsProps) {
           )}
         </div>
       </div>
-    </>
+    </>,
+    document.body
   );
 }
 
