@@ -38,7 +38,7 @@ function WidgetCard({ widget }: WidgetCardProps) {
         <GripVertical size={14} className="text-accent shrink-0" />
         <span className="text-sm font-semibold text-white truncate flex-1">{widget.title}</span>
         <div className="flex items-center gap-1 shrink-0">
-          {renderHeaderControls()}  {/* 👈 NEW: Custom controls for specific widgets */}
+          {renderHeaderControls()}
           {lockIcon}
           <button
             onMouseDown={stopDrag}
