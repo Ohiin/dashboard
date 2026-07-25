@@ -1,64 +1,222 @@
-import { useEffect, useState, memo} from "react";
+import { memo, useState, useEffect } from "react";
+import { Maximize2, Minimize2 } from "lucide-react";
 import { useLocalStorage } from "../../hooks/useLocalStorage";
 import type { WidgetContentProps } from "../WidgetRegistry";
 
+type ClockFace = "analog" | "digital" | "digital-seconds" | "flip";
+
+interface ClockState {
+  face: ClockFace;
+  format24: boolean;
+  showSeconds: boolean;
+}
+
 function ClockWidget({ widget }: WidgetContentProps) {
-  const [now, setNow] = useState(new Date());
-  const [is24h, setIs24h] = useLocalStorage<boolean>(`widget:${widget.id}:is24h`, false);
+  const [time, setTime] = useState(new Date());
+  const [settings] = useLocalStorage<ClockState>(
+    `widget:${widget.id}:settings`,
+    {
+      face: "analog",
+      format24: false,
+      showSeconds: false,
+    }
+  );
+  const [isFullscreen, setIsFullscreen] = useState(false);
 
   useEffect(() => {
-    const id = window.setInterval(() => setNow(new Date()), 1000);
-    return () => window.clearInterval(id);
+    const timer = setInterval(() => setTime(new Date()), 1000);
+    return () => clearInterval(timer);
   }, []);
 
-  const seconds = now.getSeconds();
-  const minutes = now.getMinutes();
-  const hours = now.getHours();
+  useEffect(() => {
+    if (isFullscreen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [isFullscreen]);
 
-  const secDeg = seconds * 6;
-  const minDeg = minutes * 6 + seconds * 0.1;
-  const hourDeg = (hours % 12) * 30 + minutes * 0.5;
+  const toggleFullscreen = () => setIsFullscreen(!isFullscreen);
 
-  const digitalHours = is24h ? hours : hours % 12 === 0 ? 12 : hours % 12;
-  const ampm = hours >= 12 ? "PM" : "AM";
+  const hours = settings.format24 ? time.getHours() : time.getHours() % 12 || 12;
+  const minutes = String(time.getMinutes()).padStart(2, "0");
+  const seconds = String(time.getSeconds()).padStart(2, "0");
+
+  const renderAnalog = () => {
+    const angleHours = (hours % 12) * 30 + time.getMinutes() * 0.5;
+    const angleMinutes = time.getMinutes() * 6 + time.getSeconds() * 0.1;
+    const angleSeconds = time.getSeconds() * 6;
+
+    return (
+      <div className="relative w-full max-w-[200px] aspect-square mx-auto">
+        <svg viewBox="0 0 100 100" className="w-full h-full">
+          <circle cx="50" cy="50" r="45" className="fill-bg stroke-border" strokeWidth="2" />
+          {[0, 30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330].map((deg, i) => {
+            const rad = (deg - 90) * (Math.PI / 180);
+            const x1 = 50 + 35 * Math.cos(rad);
+            const y1 = 50 + 35 * Math.sin(rad);
+            const x2 = 50 + 42 * Math.cos(rad);
+            const y2 = 50 + 42 * Math.sin(rad);
+            const isHour = i % 5 === 0;
+            return (
+              <line
+                key={i}
+                x1={x1}
+                y1={y1}
+                x2={x2}
+                y2={y2}
+                className={isHour ? "stroke-white stroke-[3]" : "stroke-accent/40 stroke-[1.5]"}
+              />
+            );
+          })}
+          <line
+            x1="50"
+            y1="50"
+            x2={50 + 20 * Math.cos((angleHours - 90) * (Math.PI / 180))}
+            y2={50 + 20 * Math.sin((angleHours - 90) * (Math.PI / 180))}
+            className="stroke-white stroke-[3] rounded-full"
+            strokeLinecap="round"
+          />
+          <line
+            x1="50"
+            y1="50"
+            x2={50 + 30 * Math.cos((angleMinutes - 90) * (Math.PI / 180))}
+            y2={50 + 30 * Math.sin((angleMinutes - 90) * (Math.PI / 180))}
+            className="stroke-accent stroke-[2] rounded-full"
+            strokeLinecap="round"
+          />
+          <line
+            x1="50"
+            y1="50"
+            x2={50 + 35 * Math.cos((angleSeconds - 90) * (Math.PI / 180))}
+            y2={50 + 35 * Math.sin((angleSeconds - 90) * (Math.PI / 180))}
+            className="stroke-cta stroke-[1] rounded-full"
+            strokeLinecap="round"
+          />
+          <circle cx="50" cy="50" r="3" className="fill-cta" />
+        </svg>
+      </div>
+    );
+  };
+
+  const renderDigital = (showSecs: boolean) => {
+    const timeStr = settings.format24
+      ? `${String(hours).padStart(2, "0")}:${minutes}${showSecs ? `:${seconds}` : ""}`
+      : `${hours}:${minutes}${showSecs ? `:${seconds}` : ""} ${hours >= 12 ? "PM" : "AM"}`;
+    
+    return (
+      <div className="flex items-center justify-center h-full">
+        <div className="font-mono font-bold text-white text-center text-5xl">
+          {timeStr}
+        </div>
+      </div>
+    );
+  };
+
+  const renderFlip = () => {
+    const h = String(hours).padStart(2, "0");
+    const m = String(time.getMinutes()).padStart(2, "0");
+    const s = String(time.getSeconds()).padStart(2, "0");
+
+    return (
+      <div className="flex items-center justify-center h-full gap-1">
+        <div className="flex gap-0.5">
+          <div className="bg-bg border border-border rounded-lg px-2 py-1 min-w-[30px] text-center">
+            <span className="text-3xl font-mono font-bold text-white">{h[0]}</span>
+          </div>
+          <div className="bg-bg border border-border rounded-lg px-2 py-1 min-w-[30px] text-center">
+            <span className="text-3xl font-mono font-bold text-white">{h[1]}</span>
+          </div>
+        </div>
+        <span className="text-2xl font-bold text-accent/60">:</span>
+        <div className="flex gap-0.5">
+          <div className="bg-bg border border-border rounded-lg px-2 py-1 min-w-[30px] text-center">
+            <span className="text-3xl font-mono font-bold text-white">{m[0]}</span>
+          </div>
+          <div className="bg-bg border border-border rounded-lg px-2 py-1 min-w-[30px] text-center">
+            <span className="text-3xl font-mono font-bold text-white">{m[1]}</span>
+          </div>
+        </div>
+        {settings.showSeconds && (
+          <>
+            <span className="text-2xl font-bold text-accent/60">:</span>
+            <div className="flex gap-0.5">
+              <div className="bg-bg border border-border rounded-lg px-2 py-1 min-w-[30px] text-center">
+                <span className="text-3xl font-mono font-bold text-white">{s[0]}</span>
+              </div>
+              <div className="bg-bg border border-border rounded-lg px-2 py-1 min-w-[30px] text-center">
+                <span className="text-3xl font-mono font-bold text-white">{s[1]}</span>
+              </div>
+            </div>
+          </>
+        )}
+      </div>
+    );
+  };
+
+  const renderClock = () => {
+    switch (settings.face) {
+      case "analog":
+        return renderAnalog();
+      case "digital":
+        return renderDigital(false);
+      case "digital-seconds":
+        return renderDigital(true);
+      case "flip":
+        return renderFlip();
+      default:
+        return renderAnalog();
+    }
+  };
 
   return (
-    <div className="flex flex-col items-center justify-center h-full gap-3 text-white">
-      <div className="relative w-24 h-24 rounded-full border-2 border-border bg-bg">
-        {[...Array(12)].map((_, i) => (
-          <div
-            key={i}
-            className="absolute w-0.5 h-1.5 bg-accent/50 left-1/2 top-0.5 origin-[1px_46px]"
-            style={{ transform: `rotate(${i * 30}deg)` }}
-          />
-        ))}
+    <>
+      {isFullscreen && (
         <div
-          className="absolute w-0.5 h-6 bg-white left-1/2 top-1/2 origin-bottom rounded-full"
-          style={{ transform: `translate(-50%, -100%) rotate(${hourDeg}deg)` }}
-        />
-        <div
-          className="absolute w-0.5 h-8 bg-accent left-1/2 top-1/2 origin-bottom rounded-full"
-          style={{ transform: `translate(-50%, -100%) rotate(${minDeg}deg)` }}
-        />
-        <div
-          className="absolute w-px h-9 bg-cta left-1/2 top-1/2 origin-bottom"
-          style={{ transform: `translate(-50%, -100%) rotate(${secDeg}deg)` }}
-        />
-        <div className="absolute w-1.5 h-1.5 rounded-full bg-cta left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2" />
-      </div>
+          className="fixed inset-0 z-[100] bg-bg flex items-center justify-center p-8"
+          onDoubleClick={toggleFullscreen}
+        >
+          <div className="w-full max-w-2xl">
+            {renderClock()}
+          </div>
+          <button
+            onClick={toggleFullscreen}
+            className="fixed top-6 right-6 text-accent/60 hover:text-white transition-colors duration-150 p-2 rounded-lg hover:bg-white/5"
+          >
+            <Minimize2 size={24} />
+          </button>
+          <div className="fixed bottom-6 left-1/2 -translate-x-1/2 text-xs text-accent/40">
+            Double-click or press ESC to exit
+          </div>
+        </div>
+      )}
 
-      <div className="text-lg font-mono font-semibold">
-        {String(digitalHours).padStart(2, "0")}:{String(minutes).padStart(2, "0")}:
-        {String(seconds).padStart(2, "0")} {!is24h && <span className="text-xs">{ampm}</span>}
+      <div className="flex flex-col h-full">
+        <div className="flex-1 flex items-center justify-center p-4">
+          {renderClock()}
+        </div>
+        <div className="text-center pb-2 flex items-center justify-center gap-3">
+          <span className="text-xs text-accent/60">
+            {time.toLocaleDateString("en-US", {
+              weekday: "long",
+              year: "numeric",
+              month: "long",
+              day: "numeric",
+            })}
+          </span>
+          <button
+            onClick={toggleFullscreen}
+            className="text-accent/40 hover:text-white transition-colors duration-150 p-1 rounded hover:bg-white/5"
+            title="Fullscreen"
+          >
+            <Maximize2 size={14} />
+          </button>
+        </div>
       </div>
-
-      <button
-        onClick={() => setIs24h(!is24h)}
-        className="text-xs px-3 py-1 rounded-full border border-border text-accent hover:bg-white/5 transition-all duration-150"
-      >
-        {is24h ? "24hr" : "12hr"} — switch
-      </button>
-    </div>
+    </>
   );
 }
 
