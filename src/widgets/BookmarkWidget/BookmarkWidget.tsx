@@ -165,7 +165,7 @@ function BookmarkWidget({ widget }: WidgetContentProps) {
     }));
   };
 
-  // --- Render Link Card (used for both grid and list) ---
+  // --- Render Link Card ---
   const LinkCard = ({ link, onDelete }: { link: BookmarkLink; onDelete: () => void }) => {
     const favicon = getFaviconUrl(link.url);
     const [imgError, setImgError] = useState(false);
@@ -206,7 +206,7 @@ function BookmarkWidget({ widget }: WidgetContentProps) {
       );
     }
 
-    // Grid view - icon tiles
+    // Grid view
     return (
       <div className="group relative">
         <a
@@ -245,7 +245,7 @@ function BookmarkWidget({ widget }: WidgetContentProps) {
   return (
     <div className="flex flex-col h-full text-white text-sm gap-2 overflow-y-auto p-1">
       {/* Toolbar */}
-      <div className="flex items-center gap-2 mb-1">
+      <div className="flex items-center gap-2 mb-1 shrink-0">
         <div className="flex-1" />
         <button
           onClick={() => setViewMode(viewMode === "grid" ? "list" : "grid")}
@@ -258,7 +258,7 @@ function BookmarkWidget({ widget }: WidgetContentProps) {
 
       {/* Add Standalone Link */}
       {showAddStandalone ? (
-        <div className="flex flex-col gap-1.5 p-3 rounded-xl bg-bg border border-border">
+        <div className="flex flex-col gap-1.5 p-3 rounded-xl bg-bg border border-border shrink-0">
           <input
             type="text"
             value={newLinkName}
@@ -304,15 +304,15 @@ function BookmarkWidget({ widget }: WidgetContentProps) {
       ) : (
         <button
           onClick={() => setShowAddStandalone(true)}
-          className="w-full text-left text-accent/70 hover:text-white text-xs py-1.5 px-3 rounded-lg border border-dashed border-border hover:border-cta/50 transition-all duration-150 flex items-center gap-1.5"
+          className="w-full text-left text-accent/70 hover:text-white text-xs py-1.5 px-3 rounded-lg border border-dashed border-border hover:border-cta/50 transition-all duration-150 flex items-center gap-1.5 shrink-0"
         >
           <Plus size={12} /> Add standalone link
         </button>
       )}
 
-      {/* Standalone Links Grid */}
+      {/* Standalone Links */}
       {data.standaloneLinks.length > 0 && (
-        <div className="mt-1">
+        <div className="mt-1 shrink-0">
           <div className="text-xs text-accent/60 mb-1.5 font-medium">Quick Links</div>
           <div className={viewMode === "grid" 
             ? "grid grid-cols-4 sm:grid-cols-5 gap-2" 
@@ -330,7 +330,7 @@ function BookmarkWidget({ widget }: WidgetContentProps) {
       )}
 
       {/* Add Folder Input */}
-      <div className="flex gap-1.5 mt-2">
+      <div className="flex gap-1.5 mt-2 shrink-0">
         <input
           type="text"
           value={newFolderName}
@@ -347,135 +347,139 @@ function BookmarkWidget({ widget }: WidgetContentProps) {
         </button>
       </div>
 
-      {/* Folders */}
+      {/* Empty State */}
       {data.folders.length === 0 && data.standaloneLinks.length === 0 && (
         <div className="text-center text-accent/60 text-xs py-6">
           Add standalone links or create folders to organize them!
         </div>
       )}
 
-      {data.folders.map((folder) => {
-        const isExpanded = expandedFolders.has(folder.id);
-        const isAddingLink = activeFolderId === folder.id;
+      {/* Folders - SCROLLABLE AREA */}
+      <div className="flex-1 min-h-0 overflow-y-auto space-y-1.5 pr-0.5">
+        {data.folders.map((folder) => {
+          const isExpanded = expandedFolders.has(folder.id);
+          const isAddingLink = activeFolderId === folder.id;
 
-        return (
-          <div
-            key={folder.id}
-            className="rounded-xl bg-bg border border-border overflow-hidden"
-          >
-            {/* Folder Header */}
+          return (
             <div
-              className="flex items-center gap-2 px-3 py-2 cursor-pointer hover:bg-white/5 transition-colors duration-150"
-              onClick={() => toggleFolder(folder.id)}
+              key={folder.id}
+              className="rounded-xl bg-bg border border-border overflow-hidden"
             >
-              {isExpanded ? (
-                <FolderOpen size={16} className="text-cta shrink-0" />
-              ) : (
-                <Folder size={16} className="text-accent shrink-0" />
-              )}
-              <span className="text-sm text-white flex-1 truncate">
-                {folder.name}
-                <span className="text-accent/60 ml-1 text-xs">
-                  ({folder.links.length})
-                </span>
-              </span>
-              <button
-                onMouseDown={(e) => e.stopPropagation()}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  deleteFolder(folder.id);
-                }}
-                className="text-accent/60 hover:text-red-400 transition-colors duration-150 p-1 rounded hover:bg-white/10"
+              {/* Folder Header */}
+              <div
+                className="flex items-center gap-2 px-3 py-2 cursor-pointer hover:bg-white/5 transition-colors duration-150"
+                onClick={() => toggleFolder(folder.id)}
               >
-                <Trash2 size={14} />
-              </button>
-              {isExpanded ? (
-                <ChevronDown size={16} className="text-accent shrink-0" />
-              ) : (
-                <ChevronRight size={16} className="text-accent shrink-0" />
-              )}
-            </div>
-
-            {/* Folder Content */}
-            {isExpanded && (
-              <div className="px-3 pb-3 pt-1 border-t border-border/50">
-                {/* Add Link to Folder */}
-                {isAddingLink ? (
-                  <div className="flex flex-col gap-1.5 mb-2">
-                    <input
-                      type="text"
-                      value={newLinkName}
-                      onChange={(e) => setNewLinkName(e.target.value)}
-                      placeholder="Link name..."
-                      className="rounded-lg bg-black/30 text-white text-sm px-2.5 py-1.5 border border-border focus:outline-none focus:border-accent placeholder:text-accent/60"
-                      autoFocus
-                    />
-                    <input
-                      type="text"
-                      value={newLinkUrl}
-                      onChange={(e) => setNewLinkUrl(e.target.value)}
-                      placeholder="URL (e.g., google.com)"
-                      className="rounded-lg bg-black/30 text-white text-sm px-2.5 py-1.5 border border-border focus:outline-none focus:border-accent placeholder:text-accent/60"
-                    />
-                    <input
-                      type="text"
-                      value={newLinkDesc}
-                      onChange={(e) => setNewLinkDesc(e.target.value)}
-                      placeholder="Short description (optional)"
-                      className="rounded-lg bg-black/30 text-white text-sm px-2.5 py-1.5 border border-border focus:outline-none focus:border-accent placeholder:text-accent/60"
-                    />
-                    <div className="flex gap-1.5">
-                      <button
-                        onClick={() => {
-                          setActiveFolderId(null);
-                          setNewLinkName("");
-                          setNewLinkUrl("");
-                          setNewLinkDesc("");
-                        }}
-                        className="flex-1 rounded-lg border border-border text-accent hover:bg-white/5 py-1.5 text-sm transition-all duration-150"
-                      >
-                        Cancel
-                      </button>
-                      <button
-                        onClick={() => addLinkToFolder(folder.id)}
-                        className="flex-1 bg-cta hover:bg-cta-hover text-white rounded-lg py-1.5 text-sm transition-all duration-150"
-                      >
-                        Add Link
-                      </button>
-                    </div>
-                  </div>
+                {isExpanded ? (
+                  <FolderOpen size={16} className="text-cta shrink-0" />
                 ) : (
-                  <button
-                    onClick={() => setActiveFolderId(folder.id)}
-                    className="w-full text-left text-accent/70 hover:text-white text-xs py-1.5 px-2 rounded-lg border border-dashed border-border hover:border-cta/50 transition-all duration-150 flex items-center gap-1.5"
-                  >
-                    <Plus size={12} /> Add link to this folder
-                  </button>
+                  <Folder size={16} className="text-accent shrink-0" />
                 )}
-
-                {/* Folder Links Grid */}
-                {folder.links.length > 0 && (
-                  <div className={viewMode === "grid" 
-                    ? "grid grid-cols-4 sm:grid-cols-5 gap-2 mt-2" 
-                    : "flex flex-col gap-0.5 mt-1"
-                  }>
-                    {folder.links.map((link) => (
-                      <LinkCard
-                        key={link.id}
-                        link={link}
-                        onDelete={() => deleteFolderLink(folder.id, link.id)}
-                      />
-                    ))}
-                  </div>
-                )}
-                {folder.links.length === 0 && !isAddingLink && (
-                  <div className="text-accent/40 text-xs py-1">No links in this folder.</div>
+                <span className="text-sm text-white flex-1 truncate">
+                  {folder.name}
+                  <span className="text-accent/60 ml-1 text-xs">
+                    ({folder.links.length})
+                  </span>
+                </span>
+                <button
+                  onMouseDown={(e) => e.stopPropagation()}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    deleteFolder(folder.id);
+                  }}
+                  className="text-accent/60 hover:text-red-400 transition-colors duration-150 p-1 rounded hover:bg-white/10"
+                >
+                  <Trash2 size={14} />
+                </button>
+                {isExpanded ? (
+                  <ChevronDown size={16} className="text-accent shrink-0" />
+                ) : (
+                  <ChevronRight size={16} className="text-accent shrink-0" />
                 )}
               </div>
-            )}
-          </div>
-        );
-      })}
+
+              {/* Folder Content - SCROLLABLE LINKS */}
+              {isExpanded && (
+                <div className="px-3 pb-3 pt-1 border-t border-border/50">
+                  {/* Add Link to Folder */}
+                  {isAddingLink ? (
+                    <div className="flex flex-col gap-1.5 mb-2">
+                      <input
+                        type="text"
+                        value={newLinkName}
+                        onChange={(e) => setNewLinkName(e.target.value)}
+                        placeholder="Link name..."
+                        className="rounded-lg bg-black/30 text-white text-sm px-2.5 py-1.5 border border-border focus:outline-none focus:border-accent placeholder:text-accent/60"
+                        autoFocus
+                      />
+                      <input
+                        type="text"
+                        value={newLinkUrl}
+                        onChange={(e) => setNewLinkUrl(e.target.value)}
+                        placeholder="URL (e.g., google.com)"
+                        className="rounded-lg bg-black/30 text-white text-sm px-2.5 py-1.5 border border-border focus:outline-none focus:border-accent placeholder:text-accent/60"
+                      />
+                      <input
+                        type="text"
+                        value={newLinkDesc}
+                        onChange={(e) => setNewLinkDesc(e.target.value)}
+                        placeholder="Short description (optional)"
+                        className="rounded-lg bg-black/30 text-white text-sm px-2.5 py-1.5 border border-border focus:outline-none focus:border-accent placeholder:text-accent/60"
+                      />
+                      <div className="flex gap-1.5">
+                        <button
+                          onClick={() => {
+                            setActiveFolderId(null);
+                            setNewLinkName("");
+                            setNewLinkUrl("");
+                            setNewLinkDesc("");
+                          }}
+                          className="flex-1 rounded-lg border border-border text-accent hover:bg-white/5 py-1.5 text-sm transition-all duration-150"
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          onClick={() => addLinkToFolder(folder.id)}
+                          className="flex-1 bg-cta hover:bg-cta-hover text-white rounded-lg py-1.5 text-sm transition-all duration-150"
+                        >
+                          Add Link
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => setActiveFolderId(folder.id)}
+                      className="w-full text-left text-accent/70 hover:text-white text-xs py-1.5 px-2 rounded-lg border border-dashed border-border hover:border-cta/50 transition-all duration-150 flex items-center gap-1.5"
+                    >
+                      <Plus size={12} /> Add link to this folder
+                    </button>
+                  )}
+
+                  {/* Folder Links - WITH SCROLLING */}
+                  {folder.links.length > 0 && (
+                    <div className={`mt-2 max-h-48 overflow-y-auto overscroll-contain pr-0.5 ${
+                      viewMode === "grid" 
+                        ? "grid grid-cols-4 sm:grid-cols-5 gap-2" 
+                        : "flex flex-col gap-0.5"
+                    }`}>
+                      {folder.links.map((link) => (
+                        <LinkCard
+                          key={link.id}
+                          link={link}
+                          onDelete={() => deleteFolderLink(folder.id, link.id)}
+                        />
+                      ))}
+                    </div>
+                  )}
+                  {folder.links.length === 0 && !isAddingLink && (
+                    <div className="text-accent/40 text-xs py-1">No links in this folder.</div>
+                  )}
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }
