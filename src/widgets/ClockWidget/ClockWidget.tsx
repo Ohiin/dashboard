@@ -14,7 +14,7 @@ interface ClockState {
 
 function ClockWidget({ widget }: WidgetContentProps) {
   const [time, setTime] = useState(new Date());
-  const [settings] = useLocalStorage<ClockState>(
+  const [settings, setSettings] = useLocalStorage<ClockState>(
     `widget:${widget.id}:settings`,
     {
       face: "analog",
@@ -23,7 +23,29 @@ function ClockWidget({ widget }: WidgetContentProps) {
     }
   );
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [, forceUpdate] = useState(0);
 
+  // Force re-render when localStorage changes (for settings sync)
+  useEffect(() => {
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === `widget:${widget.id}:settings`) {
+        forceUpdate((prev) => prev + 1);
+      }
+    };
+    window.addEventListener("storage", handleStorageChange);
+    return () => window.removeEventListener("storage", handleStorageChange);
+  }, [widget.id]);
+
+  // Also listen for custom event from the controls
+  useEffect(() => {
+    const handleSettingsUpdate = () => {
+      forceUpdate((prev) => prev + 1);
+    };
+    window.addEventListener(`settings-update-${widget.id}`, handleSettingsUpdate);
+    return () => window.removeEventListener(`settings-update-${widget.id}`, handleSettingsUpdate);
+  }, [widget.id]);
+
+  // Update time every second
   useEffect(() => {
     const timer = setInterval(() => setTime(new Date()), 1000);
     return () => clearInterval(timer);
