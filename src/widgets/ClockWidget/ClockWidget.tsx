@@ -1,103 +1,223 @@
-import { memo, useState } from "react";
-import { Trash2, GripVertical } from "lucide-react";
-import type { WidgetInstance } from "../types";
-import { WIDGET_COMPONENTS } from "../widgets/WidgetRegistry";
-import { useWidgetStore } from "../store/widgetStore";
-import { useLockIcon, LockedOverlay } from "./PasswordLock";
-import ClockWidgetControls from "../widgets/ClockWidget/ClockWidgetControls";
+import { memo, useState, useEffect } from "react";
+import { Maximize2, Minimize2 } from "lucide-react";
+import { useLocalStorage } from "../../hooks/useLocalStorage";
+import type { WidgetContentProps } from "../WidgetRegistry";
 
-interface WidgetCardProps {
-  widget: WidgetInstance;
+type ClockFace = "analog" | "digital" | "digital-seconds" | "flip";
+
+interface ClockState {
+  face: ClockFace;
+  format24: boolean;
+  showSeconds: boolean;
 }
 
-function WidgetCard({ widget }: WidgetCardProps) {
-  const removeWidget = useWidgetStore((s) => s.removeWidget);
-  const [confirmDelete, setConfirmDelete] = useState(false);
-  const [unlockedOnce, setUnlockedOnce] = useState(false);
-  const { icon: lockIcon, promptModal } = useLockIcon(widget);
+function ClockWidget({ widget }: WidgetContentProps) {
+  const [time, setTime] = useState(new Date());
+  const [settings] = useLocalStorage<ClockState>(
+    `widget:${widget.id}:settings`,
+    {
+      face: "analog",
+      format24: false,
+      showSeconds: false,
+    }
+  );
+  const [isFullscreen, setIsFullscreen] = useState(false);
 
-  const Content = WIDGET_COMPONENTS[widget.type];
-  const isLocked = widget.lock.locked && !unlockedOnce;
+  useEffect(() => {
+    const timer = setInterval(() => setTime(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, []);
 
-  // Helper to stop drag events from propagating to react-grid-layout
-  const stopDrag = (e: React.MouseEvent) => {
-    e.stopPropagation();
+  useEffect(() => {
+    if (isFullscreen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [isFullscreen]);
+
+  const toggleFullscreen = () => setIsFullscreen(!isFullscreen);
+
+  const hours = settings.format24 ? time.getHours() : time.getHours() % 12 || 12;
+  const minutes = String(time.getMinutes()).padStart(2, "0");
+  const seconds = String(time.getSeconds()).padStart(2, "0");
+
+  const renderAnalog = () => {
+    const angleHours = (hours % 12) * 30 + time.getMinutes() * 0.5;
+    const angleMinutes = time.getMinutes() * 6 + time.getSeconds() * 0.1;
+    const angleSeconds = time.getSeconds() * 6;
+
+    return (
+      <div className="relative w-full max-w-[200px] aspect-square mx-auto">
+        <svg viewBox="0 0 100 100" className="w-full h-full">
+          <circle cx="50" cy="50" r="45" className="fill-bg stroke-border" strokeWidth="2" />
+          {[0, 30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330].map((deg, i) => {
+            const rad = (deg - 90) * (Math.PI / 180);
+            const x1 = 50 + 35 * Math.cos(rad);
+            const y1 = 50 + 35 * Math.sin(rad);
+            const x2 = 50 + 42 * Math.cos(rad);
+            const y2 = 50 + 42 * Math.sin(rad);
+            const isHour = i % 5 === 0;
+            return (
+              <line
+                key={i}
+                x1={x1}
+                y1={y1}
+                x2={x2}
+                y2={y2}
+                className={isHour ? "stroke-white stroke-[3]" : "stroke-accent/40 stroke-[1.5]"}
+              />
+            );
+          })}
+          <line
+            x1="50"
+            y1="50"
+            x2={50 + 20 * Math.cos((angleHours - 90) * (Math.PI / 180))}
+            y2={50 + 20 * Math.sin((angleHours - 90) * (Math.PI / 180))}
+            className="stroke-white stroke-[3] rounded-full"
+            strokeLinecap="round"
+          />
+          <line
+            x1="50"
+            y1="50"
+            x2={50 + 30 * Math.cos((angleMinutes - 90) * (Math.PI / 180))}
+            y2={50 + 30 * Math.sin((angleMinutes - 90) * (Math.PI / 180))}
+            className="stroke-accent stroke-[2] rounded-full"
+            strokeLinecap="round"
+          />
+          <line
+            x1="50"
+            y1="50"
+            x2={50 + 35 * Math.cos((angleSeconds - 90) * (Math.PI / 180))}
+            y2={50 + 35 * Math.sin((angleSeconds - 90) * (Math.PI / 180))}
+            className="stroke-cta stroke-[1] rounded-full"
+            strokeLinecap="round"
+          />
+          <circle cx="50" cy="50" r="3" className="fill-cta" />
+        </svg>
+      </div>
+    );
   };
 
-  // Custom header controls for specific widget types
-  const renderHeaderControls = () => {
-    if (widget.type === "clock") {
-      return <ClockWidgetControls widget={widget} />;
+  const renderDigital = (showSecs: boolean) => {
+    const timeStr = settings.format24
+      ? `${String(hours).padStart(2, "0")}:${minutes}${showSecs ? `:${seconds}` : ""}`
+      : `${hours}:${minutes}${showSecs ? `:${seconds}` : ""} ${hours >= 12 ? "PM" : "AM"}`;
+    
+    return (
+      <div className="flex items-center justify-center h-full">
+        <div className="font-mono font-bold text-white text-center text-5xl">
+          {timeStr}
+        </div>
+      </div>
+    );
+  };
+
+  const renderFlip = () => {
+    const h = String(hours).padStart(2, "0");
+    const m = String(time.getMinutes()).padStart(2, "0");
+    const s = String(time.getSeconds()).padStart(2, "0");
+
+    return (
+      <div className="flex items-center justify-center h-full gap-1">
+        <div className="flex gap-0.5">
+          <div className="bg-bg border border-border rounded-lg px-2 py-1 min-w-[30px] text-center">
+            <span className="text-3xl font-mono font-bold text-white">{h[0]}</span>
+          </div>
+          <div className="bg-bg border border-border rounded-lg px-2 py-1 min-w-[30px] text-center">
+            <span className="text-3xl font-mono font-bold text-white">{h[1]}</span>
+          </div>
+        </div>
+        <span className="text-2xl font-bold text-accent/60">:</span>
+        <div className="flex gap-0.5">
+          <div className="bg-bg border border-border rounded-lg px-2 py-1 min-w-[30px] text-center">
+            <span className="text-3xl font-mono font-bold text-white">{m[0]}</span>
+          </div>
+          <div className="bg-bg border border-border rounded-lg px-2 py-1 min-w-[30px] text-center">
+            <span className="text-3xl font-mono font-bold text-white">{m[1]}</span>
+          </div>
+        </div>
+        {settings.showSeconds && (
+          <>
+            <span className="text-2xl font-bold text-accent/60">:</span>
+            <div className="flex gap-0.5">
+              <div className="bg-bg border border-border rounded-lg px-2 py-1 min-w-[30px] text-center">
+                <span className="text-3xl font-mono font-bold text-white">{s[0]}</span>
+              </div>
+              <div className="bg-bg border border-border rounded-lg px-2 py-1 min-w-[30px] text-center">
+                <span className="text-3xl font-mono font-bold text-white">{s[1]}</span>
+              </div>
+            </div>
+          </>
+        )}
+      </div>
+    );
+  };
+
+  const renderClock = () => {
+    switch (settings.face) {
+      case "analog":
+        return renderAnalog();
+      case "digital":
+        return renderDigital(false);
+      case "digital-seconds":
+        return renderDigital(true);
+      case "flip":
+        return renderFlip();
+      default:
+        return renderAnalog();
     }
-    return null;
   };
 
   return (
-    <div className="h-full w-full rounded-2xl bg-card border border-border shadow-soft flex flex-col overflow-hidden relative snap">
-      <div className="widget-drag-handle flex items-center gap-2 px-3 py-2 border-b border-border cursor-move select-none">
-        <GripVertical size={14} className="text-accent shrink-0" />
-        <span className="text-sm font-semibold text-white truncate flex-1">{widget.title}</span>
-        <div className="flex items-center gap-1 shrink-0">
-          {renderHeaderControls()}
-          {lockIcon}
-          <button
-            onMouseDown={stopDrag}
-            onClick={(e) => {
-              e.stopPropagation();
-              setConfirmDelete(true);
-            }}
-            className="text-accent hover:text-red-400 transition-colors duration-150 rounded-full p-1 hover:bg-white/10"
-            title="Delete widget"
-          >
-            <Trash2 size={14} />
-          </button>
-        </div>
-      </div>
-
-      <div className="flex-1 min-h-0 relative p-3 overflow-auto">
-        {isLocked ? (
-          <LockedOverlay widget={widget} onUnlock={() => setUnlockedOnce(true)} />
-        ) : (
-          <Content widget={widget} />
-        )}
-      </div>
-
-      {promptModal}
-
-      {confirmDelete && (
+    <>
+      {isFullscreen && (
         <div
-          className="absolute inset-0 z-20 bg-black/70 backdrop-blur-sm rounded-2xl flex flex-col items-center justify-center gap-3 p-4"
-          onMouseDown={(e) => {
-            if (e.target === e.currentTarget) setConfirmDelete(false);
-          }}
+          className="fixed inset-0 z-[100] bg-bg flex items-center justify-center p-8"
+          onDoubleClick={toggleFullscreen}
         >
-          <p className="text-white text-sm text-center">Delete this widget and its data?</p>
-          <div className="flex gap-2">
-            <button
-              onMouseDown={stopDrag}
-              onClick={(e) => {
-                e.stopPropagation();
-                setConfirmDelete(false);
-              }}
-              className="px-3 py-1.5 text-sm rounded-full border border-border text-accent hover:bg-white/5 transition-all duration-150"
-            >
-              Cancel
-            </button>
-            <button
-              onMouseDown={stopDrag}
-              onClick={(e) => {
-                e.stopPropagation();
-                removeWidget(widget.id);
-              }}
-              className="px-3 py-1.5 text-sm rounded-full bg-cta hover:bg-cta-hover text-white transition-all duration-150"
-            >
-              Delete
-            </button>
+          <div className="w-full max-w-2xl">
+            {renderClock()}
+          </div>
+          <button
+            onClick={toggleFullscreen}
+            className="fixed top-6 right-6 text-accent/60 hover:text-white transition-colors duration-150 p-2 rounded-lg hover:bg-white/5"
+          >
+            <Minimize2 size={24} />
+          </button>
+          <div className="fixed bottom-6 left-1/2 -translate-x-1/2 text-xs text-accent/40">
+            Double-click or press ESC to exit
           </div>
         </div>
       )}
-    </div>
+
+      <div className="flex flex-col h-full">
+        <div className="flex-1 flex items-center justify-center p-4">
+          {renderClock()}
+        </div>
+        <div className="text-center pb-2 flex items-center justify-center gap-3">
+          <span className="text-xs text-accent/60">
+            {time.toLocaleDateString("en-US", {
+              weekday: "long",
+              year: "numeric",
+              month: "long",
+              day: "numeric",
+            })}
+          </span>
+          <button
+            onClick={toggleFullscreen}
+            className="text-accent/40 hover:text-white transition-colors duration-150 p-1 rounded hover:bg-white/5"
+            title="Fullscreen"
+          >
+            <Maximize2 size={14} />
+          </button>
+        </div>
+      </div>
+    </>
   );
 }
 
-export default memo(WidgetCard);
+export default memo(ClockWidget);
