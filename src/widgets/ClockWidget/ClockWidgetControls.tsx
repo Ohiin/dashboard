@@ -1,103 +1,134 @@
 import { memo, useState } from "react";
-import { Trash2, GripVertical } from "lucide-react";
-import type { WidgetInstance } from "../types";
-import { WIDGET_COMPONENTS } from "../widgets/WidgetRegistry";
-import { useWidgetStore } from "../store/widgetStore";
-import { useLockIcon, LockedOverlay } from "./PasswordLock";
-import ClockWidgetControls from "../widgets/ClockWidget/ClockWidgetControls";
+import { Settings, X } from "lucide-react";
+import type { WidgetInstance } from "../../types";
+import { useLocalStorage } from "../../hooks/useLocalStorage";
 
-interface WidgetCardProps {
+interface ClockState {
+  face: string;
+  format24: boolean;
+  showSeconds: boolean;
+}
+
+interface ClockWidgetControlsProps {
   widget: WidgetInstance;
 }
 
-function WidgetCard({ widget }: WidgetCardProps) {
-  const removeWidget = useWidgetStore((s) => s.removeWidget);
-  const [confirmDelete, setConfirmDelete] = useState(false);
-  const [unlockedOnce, setUnlockedOnce] = useState(false);
-  const { icon: lockIcon, promptModal } = useLockIcon(widget);
+const CLOCK_FACES = [
+  { id: "analog", label: "Analog" },
+  { id: "digital", label: "Digital" },
+  { id: "digital-seconds", label: "Digital + Sec" },
+  { id: "flip", label: "Flip Clock" },
+];
 
-  const Content = WIDGET_COMPONENTS[widget.type];
-  const isLocked = widget.lock.locked && !unlockedOnce;
-
-  // Helper to stop drag events from propagating to react-grid-layout
-  const stopDrag = (e: React.MouseEvent) => {
-    e.stopPropagation();
-  };
-
-  // Custom header controls for specific widget types
-  const renderHeaderControls = () => {
-    if (widget.type === "clock") {
-      return <ClockWidgetControls widget={widget} />;
+function ClockWidgetControls({ widget }: ClockWidgetControlsProps) {
+  const [settings, setSettings] = useLocalStorage<ClockState>(
+    `widget:${widget.id}:settings`,
+    {
+      face: "analog",
+      format24: false,
+      showSeconds: false,
     }
-    return null;
+  );
+  const [isOpen, setIsOpen] = useState(false);
+
+  const updateSetting = <K extends keyof ClockState>(key: K, value: ClockState[K]) => {
+    setSettings({ ...settings, [key]: value });
   };
+
+  if (!isOpen) {
+    return (
+      <button
+        onClick={() => setIsOpen(true)}
+        className="text-accent/60 hover:text-white transition-colors duration-150 rounded-full p-1 hover:bg-white/10"
+        title="Clock settings"
+      >
+        <Settings size={14} />
+      </button>
+    );
+  }
 
   return (
-    <div className="h-full w-full rounded-2xl bg-card border border-border shadow-soft flex flex-col overflow-hidden relative snap">
-      <div className="widget-drag-handle flex items-center gap-2 px-3 py-2 border-b border-border cursor-move select-none">
-        <GripVertical size={14} className="text-accent shrink-0" />
-        <span className="text-sm font-semibold text-white truncate flex-1">{widget.title}</span>
-        <div className="flex items-center gap-1 shrink-0">
-          {renderHeaderControls()}
-          {lockIcon}
+    <>
+      {/* Backdrop */}
+      <div
+        className="fixed inset-0 z-40"
+        onClick={() => setIsOpen(false)}
+      />
+      
+      {/* Dropdown */}
+      <div
+        className="absolute right-0 top-full mt-2 w-56 bg-card border border-border rounded-xl shadow-soft p-3 z-50"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between mb-2">
+          <span className="text-xs font-semibold text-white">Clock Settings</span>
           <button
-            onMouseDown={stopDrag}
-            onClick={(e) => {
-              e.stopPropagation();
-              setConfirmDelete(true);
-            }}
-            className="text-accent hover:text-red-400 transition-colors duration-150 rounded-full p-1 hover:bg-white/10"
-            title="Delete widget"
+            onClick={() => setIsOpen(false)}
+            className="text-accent/60 hover:text-white transition-colors duration-150"
           >
-            <Trash2 size={14} />
+            <X size={14} />
           </button>
         </div>
-      </div>
 
-      <div className="flex-1 min-h-0 relative p-3 overflow-auto">
-        {isLocked ? (
-          <LockedOverlay widget={widget} onUnlock={() => setUnlockedOnce(true)} />
-        ) : (
-          <Content widget={widget} />
-        )}
-      </div>
-
-      {promptModal}
-
-      {confirmDelete && (
-        <div
-          className="absolute inset-0 z-20 bg-black/70 backdrop-blur-sm rounded-2xl flex flex-col items-center justify-center gap-3 p-4"
-          onMouseDown={(e) => {
-            if (e.target === e.currentTarget) setConfirmDelete(false);
-          }}
-        >
-          <p className="text-white text-sm text-center">Delete this widget and its data?</p>
-          <div className="flex gap-2">
-            <button
-              onMouseDown={stopDrag}
-              onClick={(e) => {
-                e.stopPropagation();
-                setConfirmDelete(false);
-              }}
-              className="px-3 py-1.5 text-sm rounded-full border border-border text-accent hover:bg-white/5 transition-all duration-150"
-            >
-              Cancel
-            </button>
-            <button
-              onMouseDown={stopDrag}
-              onClick={(e) => {
-                e.stopPropagation();
-                removeWidget(widget.id);
-              }}
-              className="px-3 py-1.5 text-sm rounded-full bg-cta hover:bg-cta-hover text-white transition-all duration-150"
-            >
-              Delete
-            </button>
+        {/* Clock Face */}
+        <div className="mb-2">
+          <label className="text-[10px] text-accent/60 block mb-1">Face</label>
+          <div className="grid grid-cols-2 gap-1">
+            {CLOCK_FACES.map((f) => (
+              <button
+                key={f.id}
+                onClick={() => updateSetting("face", f.id)}
+                className={`text-left px-2 py-1 rounded text-[10px] transition-all duration-150 ${
+                  settings.face === f.id
+                    ? "bg-cta text-white"
+                    : "bg-bg text-accent hover:bg-white/5"
+                }`}
+              >
+                {f.label}
+              </button>
+            ))}
           </div>
         </div>
-      )}
-    </div>
+
+        {/* Toggles */}
+        <div className="flex flex-col gap-1">
+          <label className="flex items-center justify-between cursor-pointer">
+            <span className="text-[10px] text-accent">24hr Format</span>
+            <div
+              onClick={() => updateSetting("format24", !settings.format24)}
+              className={`w-8 h-4 rounded-full transition-colors duration-150 cursor-pointer ${
+                settings.format24 ? "bg-cta" : "bg-accent/30"
+              } relative`}
+            >
+              <div
+                className={`absolute top-0.5 w-3 h-3 rounded-full bg-white transition-transform duration-150 ${
+                  settings.format24 ? "translate-x-4" : "translate-x-0.5"
+                }`}
+              />
+            </div>
+          </label>
+
+          {settings.face !== "analog" && (
+            <label className="flex items-center justify-between cursor-pointer">
+              <span className="text-[10px] text-accent">Show Seconds</span>
+              <div
+                onClick={() => updateSetting("showSeconds", !settings.showSeconds)}
+                className={`w-8 h-4 rounded-full transition-colors duration-150 cursor-pointer ${
+                  settings.showSeconds ? "bg-cta" : "bg-accent/30"
+                } relative`}
+              >
+                <div
+                  className={`absolute top-0.5 w-3 h-3 rounded-full bg-white transition-transform duration-150 ${
+                    settings.showSeconds ? "translate-x-4" : "translate-x-0.5"
+                  }`}
+                />
+              </div>
+            </label>
+          )}
+        </div>
+      </div>
+    </>
   );
 }
 
-export default memo(WidgetCard);
+export default memo(ClockWidgetControls);
